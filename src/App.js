@@ -1,8 +1,52 @@
 import * as THREE from "three";
 import { OrbitControls, Box, Environment } from "@react-three/drei";
 import { XR, VRButton } from "@react-three/xr";
-import { Canvas } from "@react-three/fiber";
-import { Suspense } from "react";
+import { Canvas, useThree, useFrame } from "@react-three/fiber";
+import { Suspense, useEffect, useState } from "react";
+
+function KeyboardControls() {
+  const { camera } = useThree();
+  const speed = 0.1; // Movement speed
+  const [moveForward, setMoveForward] = useState(false);
+  const [moveBackward, setMoveBackward] = useState(false);
+  const [moveLeft, setMoveLeft] = useState(false);
+  const [moveRight, setMoveRight] = useState(false);
+
+  // Handle keydown and keyup events for movement
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === "w") setMoveForward(true);
+      if (event.key === "s") setMoveBackward(true);
+      if (event.key === "a") setMoveLeft(true);
+      if (event.key === "d") setMoveRight(true);
+    };
+
+    const handleKeyUp = (event) => {
+      if (event.key === "w") setMoveForward(false);
+      if (event.key === "s") setMoveBackward(false);
+      if (event.key === "a") setMoveLeft(false);
+      if (event.key === "d") setMoveRight(false);
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, []);
+
+  // Update camera position based on key presses
+  useFrame(() => {
+    if (moveForward) camera.position.z -= speed;
+    if (moveBackward) camera.position.z += speed;
+    if (moveLeft) camera.position.x -= speed;
+    if (moveRight) camera.position.x += speed;
+  });
+
+  return null;
+}
 
 export default function App() {
   return (
@@ -11,23 +55,10 @@ export default function App() {
         <VRButton />
         <Canvas camera={{ position: [0, 2, 0] }}>
           <XR referenceSpace="local-floor">
-            <color attach="background" args={["#111"]} />
-            <ambientLight intensity={2} />
-            <pointLight position={[20, 10, -10]} intensity={2} />
-            <primitive object={new THREE.AxesHelper(2)} />
-            <primitive object={new THREE.GridHelper(20, 20)} />
-            <OrbitControls />
-
+            <KeyboardControls /> {/* Add Keyboard Controls */}
+            <OrbitControls /> {/* Mouse controls when not in VR */}
             {/* HDRI from a reliable source */}
-            <Environment
-              files="https://github.com/p-jeff/nhm_tests/raw/refs/heads/master/alps_field_4k%20(1).hdr"
-              background
-              blur={0.2}
-            />
-
-            <Box key="companionCube">
-              <meshPhongMaterial attach="material" color="#440066" />
-            </Box>
+            <Environment files="alps_field_8k.hdr" background />
           </XR>
         </Canvas>
       </Suspense>
